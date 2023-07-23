@@ -68,7 +68,8 @@ class TicTacToe:
 
     def check_win(self):
         '''
-        Optimization of check()
+        Checking the winner. Program checks if the last player moves.
+        Player wins only if he set 3 marks in a row, column or diagonal.
         '''
         if not self.win:
             if self.field[5] == self.last_turn:
@@ -83,33 +84,6 @@ class TicTacToe:
                          self.check_line(1,4,7)
             self.win = result
             
-    def check(self):
-        '''
-        Checking the winner. Program checks if the last player moves.
-        Player wins only if he set 3 marks in a row, column or diagonal.
-        '''
-        if not self.win:
-            result = False
-            player = self.last_turn
-            if self.field[7] == player and self.field[8] == player and self.field[9] == player:
-                result = True
-            elif self.field[9] == player and self.field[6] == player and self.field[3] == player:
-                result = True
-            elif self.field[1] == player and self.field[2] == player and self.field[3] == player:
-                result = True
-            elif self.field[7] == player and self.field[4] == player and self.field[1] == player:
-                result = True
-            elif self.field[5] == player:
-              if self.field[7] == player and self.field[3] == player:
-                  result = True
-              elif self.field[9] == player and self.field[1] == player:
-                  result = True
-              elif self.field[8] == player and self.field[2] == player:
-                  result = True
-              elif self.field[4] == player and self.field[6] == player:
-                  result = True
-            self.win = result      
-
     def autoTurn(self):
         '''
         Computer's turn. In the game first player is human, and second is computer.
