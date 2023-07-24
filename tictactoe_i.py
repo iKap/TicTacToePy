@@ -7,7 +7,85 @@ import pickle
 from datetime import datetime
 import os
 from glob import glob
+import copy
 
+check_lines_dict = { 1: [(1,2,3),(1,4,7),(1,5,9)], \
+                     2: [(1,2,3),(2,5,8)], \
+                     3: [(1,2,3),(3,6,9),(3,5,7)], \
+                     4: [(1,4,7),(4,5,6)], \
+                     5: [(4,5,6),(2,5,8),(1,5,9),(3,5,7)], \
+                     6: [(3,6,9),(4,5,6)], \
+                     7: [(1,4,7),(7,8,9),(3,5,7)], \
+                     8: [(7,8,9),(2,5,8)], \
+                     9: [(7,8,9),(3,6,9),(1,5,9)] \
+                    }
+
+class Advisor:
+    def __init__(self, key):
+        self.player = key[0]
+        self.position = [('?' if ('.' in c) else c) for c in key]
+##        self.position = copy.deepcopy(key)
+##        for i in range(1, len(self.position)):
+##            if self.position[i] == '.':
+##               self.position[i] = '?'
+
+    def __str__(self):
+        '''
+        "Position" for the game in str.
+        '''
+        f = self.position
+        s  = f'{f[7]} {f[8]} {f[9]}\n'
+        s += f'{f[4]} {f[5]} {f[6]}\n'
+        s += f'{f[1]} {f[2]} {f[3]}\n'
+        return s
+    
+    def check_line(self, pos):
+        '''
+        pos is a tuple as line-position numbers
+        '''
+        field  = self.position
+        return field[pos[0]] == field[pos[1]] and field[pos[1]] == field[pos[2]]
+
+    def check_turn(self, where):
+        '''
+        '''
+        player = self.position[0]
+        self.position[where] = player
+        #print(f'Checking pos_{where} for Player "{player.upper()}" in lines: {check_lines_dict[where]}')
+        for line in check_lines_dict[where]:
+            if self.check_line(line):
+                #print(f'Line {line} wins!')
+                self.position[where] = '+'
+                return True
+        self.position[where] = '?'
+        return False
+
+    def check_turns(self, turns):
+        win_turns = []
+        for turn in turns:
+            if self.check_turn(turn):
+                win_turns.append(turn)
+        if len(win_turns):
+            print(f'Win turns: {win_turns}')
+        return win_turns
+    
+    def suggest_turn(self):
+        free_pos = []
+        turn_pos = []
+        for i in range(1,len(self.position)):
+            if self.position[i] == '?':
+                free_pos.append(i)
+        if len(free_pos):
+            turn_pos = self.check_turns(free_pos)
+                   
+            if len(turn_pos):
+                print(f'For Player "{self.position[0].upper()}" from {free_pos} suggest win {turn_pos}')
+            else:
+                turn_pos.append(choice(free_pos))
+                print(f'For Player "{self.position[0].upper()}" from {free_pos} suggest random {turn_pos}')
+        return turn_pos
+
+    
 class TicTacToe:
     '''
     Field for the game, 2 players: 'x' and 'o'.
@@ -154,11 +232,15 @@ def Run(t):
     '''
     while t.turn_num:
         print(t)
+        adv = Advisor(t.field)
         try:
             if t.field[0] == 'x':
+                print(adv)
+                adv.suggest_turn()
                 t.turn(player_input(t))
             else:
                 t.turn(t.autoTurn())
+                #t.turn(player_input(t))
             t.check_win()
         except ImportError as ie:   
             print(ie)
@@ -182,20 +264,19 @@ def main(argv):
     
     ''' Loading the game from file '''
     if argc > 1:
+        filename = argv[1]
         if argv[1] == 'last' or argv[1] == 'auto':
             ''' get the last file with saved game from dir '''
             ls_files = glob('*.save')
-            filename = max(ls_files, key=os.path.getctime)
-        else:
-            filename = argv[1]
-            
-        print(f'Loading from {filename}')
-        try:
-            with open(filename, 'rb') as file:
-                t = pickle.load(file)
-                
-        except Exception as exc:
-            print(exc)
+            filename = max(ls_files, key=os.path.getctime) if len(ls_files) else None
+
+        if filename is not None:            
+            try:
+                with open(filename, 'rb') as file:
+                    print(f'Loading from {filename}')
+                    t = pickle.load(file)
+            except Exception as exc:
+                print(exc)
             
     if t is None:
         t = TicTacToe()        
